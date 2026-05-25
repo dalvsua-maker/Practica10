@@ -1,0 +1,113 @@
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 100%;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(to right, #1cb5e0, #000046);
+  font-family: sans-serif;
+}
+
+/* Estructura del Grid de 2 columnas y 2 filas */
+.contenedor-tablero {
+  display: grid;
+  grid-template-columns: 40px 400px; /* Columna de números (40px) y Tablero (400px) */
+  grid-template-rows: 40px 400px;    /* Fila de letras (40px) y Tablero (400px) */
+  grid-template-areas: 
+    ".       letras"
+    "numeros tablero";
+  width: max-content;
+}
+
+/* Asignación de áreas del Grid */
+.letras { grid-area: letras; }
+.numeros { grid-area: numeros; }
+.tablero { grid-area: tablero; }
+
+/* Estilos para los textos de los índices */
+.letras, .numeros {
+  display: grid;
+  font-size: 18px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.letras {
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  align-items: center;
+  text-align: center;
+}
+
+.numeros {
+  grid-template-rows: repeat(8, 1fr);
+  height: 100%;
+  justify-items: center;
+  align-items: center;
+}
+
+/* El Tablero y sus Casillas */
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 100%;
+  height: 100%;
+  border: 3px solid #000000;
+}
+
+/* Estilo unificado para cada casilla individual */
+.tablero > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000000;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+/* Alternancia de colores de las casillas en columnas */
+.tablero > div:nth-child(odd) {
+  background-color: rgb(226, 141, 141);
+}
+
+.tablero > div:nth-child(even) {
+  background-color: rgb(199, 198, 198);
+}
+
+/* Estilos de las Fichas */
+.ficha {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.ficha.blanca {
+  background-color: transparent;
+  border: 4px solid #000000;
+}
+
+.ficha.negra {
+  background-color: #000000;
+  border: 4px solid #000000;
+}
+
+.tablero > div:hover {
+  border-color: #0dcf27;
+ border:2px dotted #0dcf27;
+}
+.marcador{
+border:  #000000 2px solid;
+background-color: azure;
+padding: 1em;
+
+}
