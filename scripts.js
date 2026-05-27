@@ -41,8 +41,7 @@ function iniciarJuego() {
  * Dibuja el estado actual del tablero y el marcador en la terminal.
  */
 function pintarTablero() {
-  console.clear();
-  console.log("=== REVERSI ===");
+  process.stdout.write("\u001b[2J\u001b[0;0H");
 
   let blancas = 0;
   let negras = 0;
@@ -53,23 +52,23 @@ function pintarTablero() {
     }
   }
 
-  console.log(
-    `Jugador 1 ("Xs"): ${blancas} | Jugador 2 ("Os"): ${negras}`,
-  );
-  console.log(`Turno: ${turno === "Xs" ? "Xs" : "Os"}\n`);
-
-  console.log("    a   b   c   d   e   f   g   h");
-  console.log("  +---+---+---+---+---+---+---+---+");
+  let vista = "";
+  vista += "=== REVERSI ===\n";
+  vista += `Jugador 1 ("Xs"): ${blancas} | Jugador 2 ("Os"): ${negras}\n`;
+  vista += `Turno: ${turno === "Xs" ? "Xs" : "Os"}\n\n`;
+  vista += "    a   b   c   d   e   f   g   h\n";
+  vista += "  +---+---+---+---+---+---+---+---+\n";
 
   for (let f = 0; f < 8; f++) {
     let fila = `${f + 1} |`;
     for (let c = 0; c < 8; c++) {
       fila += ` ${tablero[f][c]} |`;
     }
-    console.log(fila);
-    console.log("  +---+---+---+---+---+---+---+---+");
+    vista += fila + "\n";
+    vista += "  +---+---+---+---+---+---+---+---\n";
   }
-  console.log();
+
+  process.stdout.write(vista);
 }
 
 /**
