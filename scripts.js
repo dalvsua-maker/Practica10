@@ -6,7 +6,7 @@
 const readline = require("readline");
 
 let tablero = [];
-let turno = "blanca";
+let turno = "Xs";
 
 const DIRECCIONES = [
   [-1, 0],
@@ -31,10 +31,10 @@ function iniciarJuego() {
   for (let i = 0; i < 8; i++) {
     tablero[i] = [" ", " ", " ", " ", " ", " ", " ", " "];
   }
-  tablero[3][3] = "B";
-  tablero[4][4] = "B";
-  tablero[3][4] = "N";
-  tablero[4][3] = "N";
+  tablero[3][3] = "X";
+  tablero[4][4] = "X";
+  tablero[3][4] = "O";
+  tablero[4][3] = "O";
 }
 
 /**
@@ -48,15 +48,15 @@ function pintarTablero() {
   let negras = 0;
   for (let f = 0; f < 8; f++) {
     for (let c = 0; c < 8; c++) {
-      if (tablero[f][c] === "B") blancas++;
-      if (tablero[f][c] === "N") negras++;
+      if (tablero[f][c] === "X") blancas++;
+      if (tablero[f][c] === "O") negras++;
     }
   }
 
   console.log(
-    `Jugador 1 (Blancas): ${blancas} | Jugador 2 (Negras): ${negras}`,
+    `Jugador 1 ("Xs"): ${blancas} | Jugador 2 ("Os"): ${negras}`,
   );
-  console.log(`Turno: ${turno === "blanca" ? "Blancas" : "Negras"}\n`);
+  console.log(`Turno: ${turno === "Xs" ? "Xs" : "Os"}\n`);
 
   console.log("    a   b   c   d   e   f   g   h");
   console.log("  +---+---+---+---+---+---+---+---+");
@@ -82,8 +82,8 @@ function pintarTablero() {
 function obtenerFichasAVoltear(filaInicio, columnaInicio, colorActual) {
   let fichasParaVoltear = [];
 
-  const fichaMia = colorActual === "blanca" ? "B" : "N";
-  const fichaRival = colorActual === "blanca" ? "N" : "B";
+  const fichaMia = colorActual === "Xs" ? "X" : "O";
+  const fichaRival = colorActual === "Xs" ? "O" : "X";
 
   DIRECCIONES.forEach(([dirFila, dirColumna]) => {
     let pasoFila = filaInicio + dirFila;
@@ -137,73 +137,122 @@ function puedeMover(color) {
   }
   return false;
 }
+/**
+ * Comprueba si el rival puede mover cuando el jugador actual está bloqueado.
+ * Si el rival tampoco puede mover, finaliza la partida y cierra la interfaz.
+ * Si el rival sí puede mover, le cede el turno y programa la continuación del juego.
+ *
+ * @function comprobarEstado
+ * @returns {void} No devuelve ningún valor.
+ */
+function comprobarEstado() {
+  const rival = turno === "Xs" ? "Os" : "Xs";
 
+  if (!puedeMover(rival)) {
+    pintarTablero();
+    console.log("¡Fin de la partida! Nadie más puede mover.");
+    rl.close();
+    return;
+  }
+
+  console.log(
+    `Las ${turno} se saltan el turno por no tener movimientos válidos.`,
+  );
+  turno = rival;
+  reintentarTurno(2000);
+}
+/**
+ * Valida el formato, la existencia y la disponibilidad de la casilla introducida por el usuario.
+ *
+ * @function validarCoordenadas
+ * @param {string} jugada - La cadena de texto introducida por el usuario (ej. "e3").
+ * @returns {{fila: number, columna: number}|null} Un objeto con los índices basados en cero de la matriz `tablero`,
+ *                                                 o `null` si la jugada no es válida.
+ */
+function validarCoordenadas(jugada) {
+  if (jugada.length !== 2) {
+    console.log("Error: Pon una letra y un número (ej: c4)");
+    reintentarTurno(1500);
+    return null;
+  }
+
+  const letras = { a: 0, b: 1, c: 2, d: 3, e: 4, f: 5, g: 6, h: 7 };
+  const fila = parseInt(jugada[1]) - 1;
+  const columna = letras[jugada[0]];
+
+  if (columna === undefined || isNaN(fila) || fila < 0 || fila > 7) {
+    console.log("Error: Esa posición no existe.");
+    reintentarTurno(1500);
+    return null;
+  }
+
+  if (tablero[fila][columna] !== " ") {
+    console.log("¡Esa casilla ya está ocupada!");
+    reintentarTurno(1500);
+    return null;
+  }
+
+  return { fila, columna };
+}
+/**
+ * Procesa el movimiento del jugador: verifica las capturas de fichas válidas,
+ * actualiza el tablero de juego y cambia el turno al siguiente jugador.
+ *
+ * @function procesarJugada
+ * @param {number} fila - El índice de la fila en el tablero (0 a 7).
+ * @param {number} columna - El índice de la columna en el tablero (0 a 7).
+ * @returns {void} No devuelve ningún valor.
+ */
+function procesarJugada(fila, columna) {
+  const capturadas = obtenerFichasAVoltear(fila, columna, turno);
+
+  if (capturadas.length === 0) {
+    console.log(
+      "Movimiento inválido: debes encerrar al menos una ficha rival.",
+    );
+    reintentarTurno(1500);
+    return;
+  }
+
+  const ficha = turno === "Xs" ? "X" : "O";
+  tablero[fila][columna] = ficha;
+
+  capturadas.forEach(([f, c]) => {
+    tablero[f][c] = ficha;
+  });
+
+  turno = turno === "Xs" ? "Os" : "Xs";
+  jugarTurno();
+}
+/**
+ * Programa la ejecución del próximo turno tras un retraso en milisegundos.
+ * Se utiliza principalmente para dar tiempo al usuario a leer mensajes en la consola.
+ *
+ * @function reintentarTurno
+ * @param {number} ms - El tiempo de espera en milisegundos antes de invocar a `jugarTurno`.
+ * @returns {void} No devuelve ningún valor.
+ */
+function reintentarTurno(ms) {
+  setTimeout(jugarTurno, ms);
+}
 /**
  * Controla el flujo del turno actual, gestionando la entrada de usuario y los cambios de estado.
  */
 function jugarTurno() {
   if (!puedeMover(turno)) {
-    let rival = turno === "blanca" ? "negra" : "blanca";
-
-    if (!puedeMover(rival)) {
-      pintarTablero();
-      console.log("¡Fin de la partida! Nadie más puede mover.");
-      rl.close();
-      return;
-    }
-
-    console.log(
-      `Las ${turno} se saltan el turno por no tener movimientos válidos.`,
-    );
-    turno = rival;
-    setTimeout(jugarTurno, 2000);
+    comprobarEstado();
     return;
   }
-
   pintarTablero();
-
   rl.question("Introduce casilla (ej. e3): ", (input) => {
     const jugada = input.trim().toLowerCase();
 
-    if (jugada.length !== 2) {
-      console.log("Error: Pon una letra y un número (ej: c4)");
-      setTimeout(jugarTurno, 1500);
-      return;
-    }
+    const coordenadas = validarCoordenadas(jugada);
+    if (!coordenadas) return;
 
-    const letras = { a: 0, b: 1, c: 2, d: 3, e: 4, f: 5, g: 6, h: 7 };
-    const fila = parseInt(jugada[1]) - 1;
-    const columna = letras[jugada[0]];
+    const { fila, columna } = coordenadas;
 
-    if (columna === undefined || isNaN(fila) || fila < 0 || fila > 7) {
-      console.log("Error: Esa posición no existe.");
-      setTimeout(jugarTurno, 1500);
-      return;
-    }
-
-    if (tablero[fila][columna] !== " ") {
-      console.log("¡Esa casilla ya está ocupada!");
-      setTimeout(jugarTurno, 1500);
-      return;
-    }
-
-    const capturadas = obtenerFichasAVoltear(fila, columna, turno);
-
-    if (capturadas.length > 0) {
-      tablero[fila][columna] = turno === "blanca" ? "B" : "N";
-
-      capturadas.forEach(([f, c]) => {
-        tablero[f][c] = turno === "blanca" ? "B" : "N";
-      });
-
-      turno = turno === "blanca" ? "negra" : "blanca";
-      jugarTurno();
-    } else {
-      console.log(
-        "Movimiento inválido: debes encerrar al menos una ficha rival.",
-      );
-      setTimeout(jugarTurno, 1500);
-    }
+    procesarJugada(fila, columna);
   });
 }
 
