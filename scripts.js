@@ -167,15 +167,73 @@ function voltearFichas(listaCasillas) {
 }
 
 /**
- * Cambia el turno del juego entre 'blanca' y 'negra' y actualiza la interfaz.
+ * Cambia el turno del juego entre 'blanca' y 'negra' y gestiona los bloqueos de movimientos.
  *
  * @returns {void}
  */
 function cambiarTurno() {
-  turnoActual = turnoActual === "blanca" ? "negra" : "blanca";
-  textoTurno.textContent = `Turno: ${turnoActual === "blanca" ? "Blancas" : "Negras"}`;
+  const siguienteTurno = turnoActual === "blanca" ? "negra" : "blanca";
+
+  if (tieneMovimientosValidos(siguienteTurno)) {
+    turnoActual = siguienteTurno;
+    textoTurno.textContent = `Turno: ${turnoActual === "blanca" ? "Blancas" : "Negras"}`;
+  } else if (tieneMovimientosValidos(turnoActual)) {
+    mostrarError(`¡Las ${siguienteTurno === "blanca" ? "Blancas" : "Negras"} no tienen movimientos! Se pasa el turno.`);
+  } else {
+    finalizarPartida();
+  }
+}
+/**
+ * Comprueba si un jugador tiene al menos un movimiento legal en todo el tablero.
+ *
+ * @param {string} color - El color del jugador a evaluar ('blanca' o 'negra').
+ * @returns {boolean} True si tiene movimientos disponibles, false en caso contrario.
+ */
+function tieneMovimientosValidos(color) {
+  let valido = false;
+
+  casillas.forEach((casilla) => {
+    if (casilla.innerHTML.trim() === "") {
+      const fila = parseInt(casilla.dataset.fila);
+      const columna = parseInt(casilla.dataset.columna);
+      const simulacion = obtenerFichasAVoltear(fila, columna, color);
+      
+      if (simulacion.length > 0) {
+        valido = true;
+      }
+    }
+  });
+
+  return valido;
 }
 
+/**
+ * Evalúa el recuento final de fichas y muestra en pantalla el resultado del juego.
+ *
+ * @returns {void}
+ */
+function finalizarPartida() {
+  const totalBlancas = document.querySelectorAll(".ficha.blanca").length;
+  const totalNegras = document.querySelectorAll(".ficha.negra").length;
+  
+  let mensajeFinal = "";
+  if (totalBlancas > totalNegras) {
+    mensajeFinal = `¡Fin de la partida! Ganan las Blancas (${totalBlancas} a ${totalNegras})`;
+  } else if (totalNegras > totalBlancas) {
+    mensajeFinal = `¡Fin de la partida! Ganan las Negras (${totalNegras} a ${totalBlancas})`;
+  } else {
+    mensajeFinal = `¡Fin de la partida! Empate a ${totalBlancas}`;
+  }
+
+  textoTurno.textContent = "Partida Finalizada";
+  
+  // Usamos el contenedor de errores para fijar el ganador de forma vistosa
+  const contenedorError = document.getElementById("alerta-error");
+  contenedorError.style.color = "#0dcf27"; // Cambiamos a verde para el éxito
+  contenedorError.textContent = mensajeFinal;
+  
+  if (window.timerError) clearTimeout(window.timerError); // Evitamos que se borre el mensaje
+}
 /**
  * Cuenta las fichas de cada color en el tablero y actualiza los marcadores de puntuación.
  *
@@ -205,3 +263,6 @@ function mostrarError(mensaje) {
     contenedorError.textContent = "";
   }, 2000);
 }
+
+
+actualizarMarcador();
